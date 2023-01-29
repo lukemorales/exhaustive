@@ -17,7 +17,7 @@ on:
 jobs:
   install-deps:
     name: 📦 Install dependencies
-    if: github.repository == 'lukemorales/query-key-factory' && github.event_name != 'pull_request'
+    if: github.repository == 'lukemorales/exhaustive' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: 🔑 Checkout Repository
