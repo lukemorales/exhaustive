@@ -2,11 +2,11 @@ import { corrupt } from './corrupt';
 
 type AnyFunction = (...args: any[]) => unknown;
 
-type ExhaustiveUnion<Union extends string> = {
+export type ExhaustiveUnion<Union extends string> = {
   [Key in Union]: (value: Key) => any;
 } & ExhaustiveFallback;
 
-type ExhaustiveTag<Union extends object, Tag extends keyof Union> = {
+export type ExhaustiveTag<Union extends object, Tag extends keyof Union> = {
   [Key in Union[Tag] & string]: (
     value: Extract<Union, { [K in Tag]: Key }>,
   ) => any;
@@ -35,23 +35,22 @@ type ValidateKeys<T, U> = [keyof T] extends [keyof U]
 function exhaustive<
   Union extends string,
   Match extends ExhaustiveUnion<Union> = ExhaustiveUnion<Union>,
->(
-  union: Union,
-  match: ValidateKeys<Match, ExhaustiveUnion<Union>>,
-): Match[keyof Match] extends AnyFunction
-  ? ReturnType<Match[keyof Match]>
-  : never;
+  Output = Match[keyof Match] extends AnyFunction
+    ? ReturnType<Match[keyof Match]>
+    : never,
+>(union: Union, match: ValidateKeys<Match, ExhaustiveUnion<Union>>): Output;
 function exhaustive<
   Union extends object,
   Tag extends keyof Union,
   Match extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
+  Output = Match[keyof Match] extends AnyFunction
+    ? ReturnType<Match[keyof Match]>
+    : never,
 >(
   union: Union,
   tag: Tag,
   match: ValidateKeys<Match, ExhaustiveTag<Union, Tag>>,
-): Match[keyof Match] extends AnyFunction
-  ? ReturnType<Match[keyof Match]>
-  : never;
+): Output;
 function exhaustive(union: any, matchOrKeyofUnion: any, match?: any) {
   if (typeof match !== 'undefined') {
     return exhaustive.tag(union, matchOrKeyofUnion, match);
@@ -73,13 +72,14 @@ exhaustive.tag = <
   Union extends object,
   Tag extends keyof Union,
   Match extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
+  Output = Match[keyof Match] extends AnyFunction
+    ? ReturnType<Match[keyof Match]>
+    : never,
 >(
   union: Union,
   tag: Tag,
   match: ValidateKeys<Match, ExhaustiveTag<Union, Tag>>,
-): Match[keyof Match] extends AnyFunction
-  ? ReturnType<Match[keyof Match]>
-  : never => {
+): Output => {
   const key = union[tag];
 
   if (!Object.prototype.hasOwnProperty.call(match, key)) {
