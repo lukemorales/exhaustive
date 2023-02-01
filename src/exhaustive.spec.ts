@@ -143,7 +143,7 @@ describe('exhaustive._tag', () => {
     type ExecOptions = { withFallback: boolean };
 
     const exec = (union: TaggedUnion, options?: ExecOptions) =>
-      exhaustive._tag(union, 'state', {
+      exhaustive.tag(union, 'state', {
         IDLE: (value) => value.state.toLowerCase(),
         LOADING: (value) => value.state.toLowerCase(),
         SUCCESS: (value) => value.state.toLowerCase(),

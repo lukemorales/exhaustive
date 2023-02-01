@@ -54,7 +54,7 @@ function exhaustive<
   : never;
 function exhaustive(union: any, matchOrKeyofUnion: any, match?: any) {
   if (typeof match !== 'undefined') {
-    return exhaustive._tag(union, matchOrKeyofUnion, match);
+    return exhaustive.tag(union, matchOrKeyofUnion, match);
   }
 
   if (!Object.prototype.hasOwnProperty.call(matchOrKeyofUnion, union)) {
@@ -69,7 +69,7 @@ function exhaustive(union: any, matchOrKeyofUnion: any, match?: any) {
   return result(union);
 }
 
-exhaustive._tag = <
+exhaustive.tag = <
   Union extends object,
   Tag extends keyof Union,
   Match extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
