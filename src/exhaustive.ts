@@ -51,20 +51,30 @@ function exhaustive<
   tag: Tag,
   match: ValidateKeys<Match, ExhaustiveTag<Union, Tag>>,
 ): Output;
-function exhaustive(union: any, matchOrKeyofUnion: any, match?: any) {
+function exhaustive(
+  unionOrObject: string | object,
+  matchOrKeyofUnion: string | object,
+  match?: object,
+) {
   if (typeof match !== 'undefined') {
-    return exhaustive.tag(union, matchOrKeyofUnion, match);
+    const unionObject = unionOrObject as object;
+    const keyofUnion = matchOrKeyofUnion as keyof typeof unionObject;
+
+    return exhaustive.tag(unionObject, keyofUnion, match);
   }
 
-  if (!Object.prototype.hasOwnProperty.call(matchOrKeyofUnion, union)) {
-    if (Object.prototype.hasOwnProperty.call(matchOrKeyofUnion, '_')) {
-      return (matchOrKeyofUnion as Required<ExhaustiveFallback>)._();
+  const union = unionOrObject as string;
+  const unionMatch = matchOrKeyofUnion as object;
+
+  if (!Object.prototype.hasOwnProperty.call(unionMatch, union)) {
+    if (Object.prototype.hasOwnProperty.call(unionMatch, '_')) {
+      return (unionMatch as Required<ExhaustiveFallback>)._();
     }
 
     return corrupt(union as never);
   }
 
-  const result = (matchOrKeyofUnion as object)[union as string];
+  const result = unionMatch[union];
   return result(union);
 }
 
