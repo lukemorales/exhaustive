@@ -59,7 +59,7 @@ const getUserPermissions = (role: Role) =>
 ## 📝 Features
 
 ### Tagged Unions
-When working with `Tagged Unions` (or `Discriminated Unions`), use `exhaustive._tag` to inform what property to discriminate between union members:
+When working with `Tagged Unions` (or `Discriminated Unions`), use `exhaustive.tag` to inform what property to discriminate between union members:
 
 ```ts
 interface Square {
@@ -81,13 +81,32 @@ interface Circle {
 type Shape = Square | Rectangle | Circle;
 
 const area = (s: Shape) => {
-  return exhaustive._tag(s, 'kind', {
+  return exhaustive.tag(s, 'kind', {
     square: (shape) => shape.size ** 2,
     rectangle: (shape) => shape.width * shape.height,
     circle: (shape) => Math.PI * shape.radius ** 2,
   });
 };
 ```
+
+An overload is also available in the core `exhaustive` function: by adding a third parameter to the function, Typescript will fallback to the Tagged Union overload.
+
+```ts
+exhaustive(s, 'kind', {
+  square: (shape) => shape.size ** 2,
+  rectangle: (shape) => shape.width * shape.height,
+  circle: (shape) => Math.PI * shape.radius ** 2,
+});
+```
+
+PS: Note that TypeScript has a limitation inferring the Tagged Union overload via argument types because they are generic values. This means autocomplete for the Tagged Union keys will not exist until you declare an empty object as the third argument:
+
+```ts
+exhaustive(s, 'kind', {});
+//                     ^ this will trigger the Tagged Union overload
+```
+
+This overload exists so you can use it at your own convenience, but if you prefer the better DX of inferred types from the start, calling `exhaustive.tag` is still preferrable.
 
 ### Type Narrowing
 For every case checked, `exhaustive` will narrow the type of input:
@@ -104,7 +123,7 @@ const getRoleLabel = (r: Role) =>
   });
 
 const area = (s: Shape) => {
-  return exhaustive._tag(s, 'kind', {
+  return exhaustive.tag(s, 'kind', {
     square: (shape) => shape.size ** 2,
 //             ^? shape is Square
     rectangle: (shape) => shape.width * shape.height,
