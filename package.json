@@ -1,6 +1,6 @@
 {
   "name": "exhaustive",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Exhaustiveness checking in TypeScript",
   "author": "Luke Morales <lukemorales@live.com>",
   "license": "MIT",
