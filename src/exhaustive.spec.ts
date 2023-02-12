@@ -82,6 +82,37 @@ describe('exhaustive', () => {
         });
       });
     });
+
+    describe('when used with a boolean', () => {
+      type Condition = boolean;
+
+      type ExecOptions = { withFallback: boolean };
+
+      const exec = (condition: Condition, options?: ExecOptions) =>
+        exhaustive(condition, {
+          false: (value) => value.toString(),
+          true: (value) => value.toString(),
+          ...(options?.withFallback ? { _: () => '🚨' } : {}),
+        });
+
+      const eachCase = it.each([true, false] as const);
+
+      eachCase('returns the stringified value for "%s"', (value) => {
+        expect(exec(value)).toBe(value.toString());
+      });
+
+      describe('when no fallback is declared', () => {
+        it('throws an exception when an invalid value is passed through', () => {
+          expect(() => exec('unknown' as any)).toThrow(TypeError);
+        });
+      });
+
+      describe('when a fallback is declared', () => {
+        it('returns the declared fallback value', () => {
+          expect(exec('unknown' as any, { withFallback: true })).toBe('🚨');
+        });
+      });
+    });
   });
 
   describe('when used with three arguments', () => {
@@ -114,6 +145,45 @@ describe('exhaustive', () => {
         'returns the lower cased value of the discriminator for "%s"',
         (value) => {
           expect(exec(value)).toBe(value.state.toLowerCase());
+        },
+      );
+
+      describe('when no fallback is declared', () => {
+        it('throws an exception when an invalid value is passed through', () => {
+          expect(() => exec('unknown' as any)).toThrow(TypeError);
+        });
+      });
+
+      describe('when a fallback is declared', () => {
+        it('returns the declared fallback value', () => {
+          expect(exec('unknown' as any, { withFallback: true })).toBe('🚨');
+        });
+      });
+    });
+
+    describe('when used with a discriminated union whose values are booleans', () => {
+      type TaggedUnion =
+        | { checked: true; data: string }
+        | { checked: false; error: string };
+
+      type ExecOptions = { withFallback: boolean };
+
+      const exec = (union: TaggedUnion, options?: ExecOptions) =>
+        exhaustive(union, 'checked', {
+          true: (value) => value.checked.toString(),
+          false: (value) => value.checked.toString(),
+          ...(options?.withFallback ? { _: () => '🚨' } : {}),
+        });
+
+      const eachCase = it.each([
+        { checked: true, data: '✅' },
+        { checked: false, error: '❌' },
+      ] as TaggedUnion[]);
+
+      eachCase(
+        'returns the lower cased value of the discriminator for "%s"',
+        (value) => {
+          expect(exec(value)).toBe(value.checked.toString());
         },
       );
 
@@ -162,6 +232,45 @@ describe('exhaustive._tag', () => {
       'returns the lower cased value of the discriminator for "%s"',
       (value) => {
         expect(exec(value)).toBe(value.state.toLowerCase());
+      },
+    );
+
+    describe('when no fallback is declared', () => {
+      it('throws an exception when an invalid value is passed through', () => {
+        expect(() => exec('unknown' as any)).toThrow(TypeError);
+      });
+    });
+
+    describe('when a fallback is declared', () => {
+      it('returns the declared fallback value', () => {
+        expect(exec('unknown' as any, { withFallback: true })).toBe('🚨');
+      });
+    });
+  });
+
+  describe('when used with a discriminated union whose values are booleans', () => {
+    type TaggedUnion =
+      | { checked: true; data: string }
+      | { checked: false; error: string };
+
+    type ExecOptions = { withFallback: boolean };
+
+    const exec = (union: TaggedUnion, options?: ExecOptions) =>
+      exhaustive.tag(union, 'checked', {
+        true: (value) => value.checked.toString(),
+        false: (value) => value.checked.toString(),
+        ...(options?.withFallback ? { _: () => '🚨' } : {}),
+      });
+
+    const eachCase = it.each([
+      { checked: true, data: '✅' },
+      { checked: false, error: '❌' },
+    ] as TaggedUnion[]);
+
+    eachCase(
+      'returns the lower cased value of the discriminator for "%s"',
+      (value) => {
+        expect(exec(value)).toBe(value.checked.toString());
       },
     );
 
