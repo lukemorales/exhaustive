@@ -2,31 +2,27 @@ import { corrupt } from './corrupt';
 
 type AnyFunction = (...args: any[]) => unknown;
 
-export type ExhaustiveUnion<Union extends string | boolean> =
-  Union extends string
-    ? {
-        [Key in Union]: (value: Key) => any;
-      } & ExhaustiveFallback
-    : Union extends boolean
-    ? {
-        [Key in `${Union}`]: (value: Key extends 'true' ? true : false) => any;
-      } & ExhaustiveFallback
-    : never;
+export type ExhaustiveUnion<Union extends string | boolean> = {
+  [Key in `${Union}`]: (
+    value: Key extends 'true' ? true : Key extends 'false' ? false : Key,
+  ) => any;
+} & ExhaustiveFallback;
 
 export type ExhaustiveTag<
   Union extends object,
   Tag extends keyof Union,
-  Values extends Union[Tag] = Union[Tag],
-> = Values extends string
+> = Union[Tag] extends string | boolean
   ? {
-      [Key in Values]: (value: Extract<Union, { [K in Tag]: Key }>) => any;
-    } & ExhaustiveFallback
-  : Values extends boolean
-  ? {
-      [Key in `${Values}`]: (
+      [Key in `${Union[Tag]}`]: (
         value: Extract<
           Union,
-          { [K in Tag]: Key extends 'true' ? true : false }
+          {
+            [K in Tag]: Key extends 'true'
+              ? true
+              : Key extends 'false'
+              ? false
+              : Key;
+          }
         >,
       ) => any;
     } & ExhaustiveFallback
@@ -80,7 +76,6 @@ function exhaustive(
     const unionObject = unionOrObject as object;
     const keyofUnion = matchOrKeyofUnion as keyof typeof unionObject;
 
-    // @ts-expect-error super generic overload implementation will fallback to never
     return exhaustive.tag(unionObject, keyofUnion, match);
   }
 
