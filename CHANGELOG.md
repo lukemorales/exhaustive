@@ -1,5 +1,41 @@
 # exhaustive
 
+## 1.1.0
+
+### Minor Changes
+
+- [#6](https://github.com/lukemorales/exhaustive/pull/6) [`abc000e`](https://github.com/lukemorales/exhaustive/commit/abc000e7c7c176be342d27ffc55e3b88687ef534) Thanks [@lukemorales](https://github.com/lukemorales)! - ## Add support for booleans
+
+  Both `exhaustive` and `exhaustive.tag` can now be exhaustive checked against booleans:
+
+  ```ts
+  function handleStatus(isSelected: boolean) {
+    return exhaustive(isSelected, {
+      true: () => {
+        // ...run handler for true case
+      },
+      false: () => {
+        // ...run handler for false case
+      },
+    });
+  }
+  ```
+
+  ```ts
+  type ProfileStatus =
+    | { checked: true; data: string }
+    | { checked: false; error: string };
+
+  function handleProfileStatus(status: ProfileStatus) {
+    return exhaustive.tag(status, "checked", {
+      true: (value) => saveProfile(value.data),
+      //           ^? value is { checked: true; data: string }
+      false: (value) => throwException(value.error),
+      //           ^? value is { checked: false; error: string }
+    });
+  }
+  ```
+
 ## 1.0.0
 
 ### Major Changes
