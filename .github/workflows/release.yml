@@ -38,9 +38,9 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: 🛠️ Setup Node and install project dependencies
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
 
@@ -61,9 +61,9 @@ jobs:
           version: 9
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
 
@@ -111,9 +111,9 @@ jobs:
           key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node for NPM
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16.14.2'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
@@ -161,7 +161,7 @@ jobs:
   #         key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
   #     - name: 🛠️ Setup Node for GPR
-  #       uses: actions/setup-node@v3
+  #       uses: actions/setup-node@v4
   #       with:
   #         node-version: '16.14.2'
   #         check-latest: true

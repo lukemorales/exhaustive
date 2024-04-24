@@ -28,9 +28,9 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: 🛠️ Setup Node and install project dependencies
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
 
@@ -57,9 +57,9 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
 
@@ -90,9 +90,9 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           check-latest: true
           cache: 'pnpm'
 
