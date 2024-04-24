@@ -5,13 +5,13 @@ describe('unreachable', () => {
     expect(() =>
       corrupt(undefined as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"undefined\\""',
+      `[TypeError: Internal Error: encountered impossible value "undefined"]`,
     );
   });
 
   it('handles "null', () => {
     expect(() => corrupt(null as never)).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"null\\""',
+      `[TypeError: Internal Error: encountered impossible value "null"]`,
     );
   });
 
@@ -19,7 +19,7 @@ describe('unreachable', () => {
     expect(() =>
       corrupt('corrupt' as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"corrupt\\""',
+      `[TypeError: Internal Error: encountered impossible value "corrupt"]`,
     );
   });
 
@@ -27,7 +27,7 @@ describe('unreachable', () => {
     expect(() =>
       corrupt({ key: 'corrupt' } as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"{\\"key\\":\\"corrupt\\"}\\""',
+      `[TypeError: Internal Error: encountered impossible value "{"key":"corrupt"}"]`,
     );
   });
 
@@ -36,7 +36,7 @@ describe('unreachable', () => {
     obj.corrupt = obj;
 
     expect(() => corrupt(obj as never)).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"circular object\\""',
+      `[TypeError: Internal Error: encountered impossible value "circular object"]`,
     );
   });
 
@@ -44,7 +44,7 @@ describe('unreachable', () => {
     expect(() =>
       corrupt(['corrupt'] as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"[\\"corrupt\\"]\\""',
+      `[TypeError: Internal Error: encountered impossible value "["corrupt"]"]`,
     );
   });
 
@@ -52,7 +52,7 @@ describe('unreachable', () => {
     expect(() =>
       corrupt(BigInt(1) as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"1 (bigint)\\""',
+      `[TypeError: Internal Error: encountered impossible value "1 (bigint)"]`,
     );
   });
 
@@ -60,7 +60,7 @@ describe('unreachable', () => {
     expect(() =>
       corrupt(Symbol('corrupt') as never),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"Internal Error: encountered impossible value \\"Symbol(corrupt)\\""',
+      `[TypeError: Internal Error: encountered impossible value "Symbol(corrupt)"]`,
     );
   });
 
@@ -70,7 +70,7 @@ describe('unreachable', () => {
     });
 
     expect(() => corrupt({} as never)).toThrowErrorMatchingInlineSnapshot(
-      '"Unexpected error: failed to stringify value"',
+      `[Error: Unexpected error: failed to stringify value]`,
     );
   });
 });
