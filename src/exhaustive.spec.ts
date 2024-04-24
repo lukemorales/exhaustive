@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import { exhaustive } from './exhaustive';
 
 describe('exhaustive', () => {
@@ -41,6 +42,7 @@ describe('exhaustive', () => {
     });
 
     describe('when used with an enum', () => {
+      // eslint-disable-next-line no-restricted-syntax
       enum Union {
         'IDLE' = 'IDLE',
         'LOADING' = 'LOADING',

@@ -1,40 +1,30 @@
+/* eslint-disable prefer-object-has-own */
 import { corrupt } from './corrupt';
+
+type ParseValue<Value> =
+  Value extends 'true' ? true
+  : Value extends 'false' ? false
+  : Value;
 
 type AnyFunction = (...args: any[]) => unknown;
 
 export type ExhaustiveUnion<Union extends string | boolean> = {
-  [Key in `${Union}`]: (
-    value: Key extends 'true' ? true : Key extends 'false' ? false : Key,
+  [Key in `${Union}`]: (value: ParseValue<Key>) => any;
+} & ExhaustiveDefaultCase;
+
+export type ExhaustiveTag<Union extends object, Tag extends keyof Union> = {
+  [Key in `${Union[Tag] & (string | boolean)}`]: (
+    value: Extract<Union, { [K in Tag]: ParseValue<Key> }>,
   ) => any;
-} & ExhaustiveFallback;
+} & ExhaustiveDefaultCase;
 
-export type ExhaustiveTag<
-  Union extends object,
-  Tag extends keyof Union,
-> = Union[Tag] extends string | boolean
-  ? {
-      [Key in `${Union[Tag]}`]: (
-        value: Extract<
-          Union,
-          {
-            [K in Tag]: Key extends 'true'
-              ? true
-              : Key extends 'false'
-              ? false
-              : Key;
-          }
-        >,
-      ) => any;
-    } & ExhaustiveFallback
-  : never;
-
-type ExhaustiveFallback = {
+type ExhaustiveDefaultCase = {
   /**
-   * Default fallback
+   * Default case
    *
    * @description
-   * When declared, "exhaustive" will fallback to this callback
-   * instead of throwing an unreachable error
+   * When declared, "exhaustive" will fallback to this case
+   * instead of throwing an unreachable error on unmatched case
    */
   _?: () => any;
 };
@@ -42,82 +32,91 @@ type ExhaustiveFallback = {
 /**
  * Ensures no extra values are passed to the object
  */
-type ValidateKeys<T, U> = [keyof T] extends [keyof U]
-  ? T
+type ValidateKeys<T, U> =
+  [keyof T] extends [keyof U] ? T
   : {
       [Key in keyof U]: Key extends keyof T ? T[Key] : never;
     };
 
+function hasDefaultCase(
+  match: object,
+): match is Required<ExhaustiveDefaultCase> {
+  return Object.prototype.hasOwnProperty.call(match, '_');
+}
+
 function exhaustive<
   Union extends string | boolean,
-  Match extends ExhaustiveUnion<Union> = ExhaustiveUnion<Union>,
-  Output = Match[keyof Match] extends AnyFunction
-    ? ReturnType<Match[keyof Match]>
-    : never,
->(union: Union, match: ValidateKeys<Match, ExhaustiveUnion<Union>>): Output;
+  Cases extends ExhaustiveUnion<Union> = ExhaustiveUnion<Union>,
+  Output = Cases[keyof Cases] extends AnyFunction ?
+    ReturnType<Cases[keyof Cases]>
+  : never,
+>(union: Union, match: ValidateKeys<Cases, ExhaustiveUnion<Union>>): Output;
 function exhaustive<
   Union extends object,
   Tag extends keyof Union,
-  Match extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = Match[keyof Match] extends AnyFunction
-    ? ReturnType<Match[keyof Match]>
-    : never,
+  Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
+  Output = Cases[keyof Cases] extends AnyFunction ?
+    ReturnType<Cases[keyof Cases]>
+  : never,
 >(
   union: Union,
   tag: Tag,
-  match: ValidateKeys<Match, ExhaustiveTag<Union, Tag>>,
+  match: ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
 ): Output;
 function exhaustive(
   unionOrObject: string | object,
-  matchOrKeyofUnion: string | object,
-  match?: object,
+  casesOrKeyofUnion: string | object,
+  cases?: object,
 ) {
-  if (typeof match !== 'undefined') {
-    const unionObject = unionOrObject as object;
-    const keyofUnion = matchOrKeyofUnion as keyof typeof unionObject;
+  if (typeof cases !== 'undefined') {
+    const object = unionOrObject as object;
+    const keyOfUnion = casesOrKeyofUnion as keyof typeof object;
 
-    return exhaustive.tag(unionObject, keyofUnion, match);
+    return exhaustive.tag(object, keyOfUnion, cases);
   }
 
   const union = unionOrObject as string;
-  const unionMatch = matchOrKeyofUnion as object;
+  const unionCases = casesOrKeyofUnion as object;
 
-  if (!Object.prototype.hasOwnProperty.call(unionMatch, union)) {
-    if (Object.prototype.hasOwnProperty.call(unionMatch, '_')) {
-      return (unionMatch as Required<ExhaustiveFallback>)._();
-    }
+  const matchesKey: boolean = Object.prototype.hasOwnProperty.call(
+    unionCases,
+    union,
+  );
 
-    return corrupt(union as never);
+  if (!matchesKey) {
+    return hasDefaultCase(unionCases) ?
+        unionCases._()
+      : corrupt(union as never);
   }
 
-  const result = unionMatch[union];
-  return result(union);
+  const event = unionCases[union];
+
+  return event(union);
 }
 
 exhaustive.tag = <
   Union extends object,
   Tag extends keyof Union,
-  Match extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = Match[keyof Match] extends AnyFunction
-    ? ReturnType<Match[keyof Match]>
-    : never,
+  Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
+  Output = Cases[keyof Cases] extends AnyFunction ?
+    ReturnType<Cases[keyof Cases]>
+  : never,
 >(
   union: Union,
   tag: Tag,
-  match: ValidateKeys<Match, ExhaustiveTag<Union, Tag>>,
+  cases: ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
 ): Output => {
   const key = union[tag];
 
-  if (!Object.prototype.hasOwnProperty.call(match, key)) {
-    if (Object.prototype.hasOwnProperty.call(match, '_')) {
-      return (match as Required<ExhaustiveFallback>)._();
-    }
+  const matchesKey: boolean = Object.prototype.hasOwnProperty.call(cases, key);
 
-    return corrupt(union as never);
+  if (!matchesKey) {
+    return hasDefaultCase(cases) ? cases._() : corrupt(union as never);
   }
 
-  const result = match[key as string];
-  return result(union);
+  const event = cases[key as string];
+
+  return event(union);
 };
 
 export { exhaustive };
