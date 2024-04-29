@@ -6,8 +6,6 @@ type ParseValue<Value> =
   : Value extends 'false' ? false
   : Value;
 
-type AnyFunction = (...args: any[]) => unknown;
-
 export type ExhaustiveUnion<Union extends string | boolean> = {
   [Key in `${Union}`]: (value: ParseValue<Key>) => any;
 } & ExhaustiveDefaultCase;
@@ -47,17 +45,13 @@ function hasDefaultCase(
 function exhaustive<
   Union extends string | boolean,
   Cases extends ExhaustiveUnion<Union> = ExhaustiveUnion<Union>,
-  Output = Cases[keyof Cases] extends AnyFunction ?
-    ReturnType<Cases[keyof Cases]>
-  : never,
+  Output = ReturnType<Cases[keyof Cases]>,
 >(union: Union, match: ValidateKeys<Cases, ExhaustiveUnion<Union>>): Output;
 function exhaustive<
   Union extends object,
   Tag extends keyof Union,
   Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = Cases[keyof Cases] extends AnyFunction ?
-    ReturnType<Cases[keyof Cases]>
-  : never,
+  Output = ReturnType<Cases[keyof Cases]>,
 >(
   union: Union,
   tag: Tag,
@@ -69,27 +63,26 @@ function exhaustive(
   cases?: object,
 ) {
   if (typeof cases !== 'undefined') {
-    const object = unionOrObject as object;
-    const keyOfUnion = casesOrKeyofUnion as keyof typeof object;
-
-    return exhaustive.tag(object, keyOfUnion, cases);
+    return exhaustive.tag(
+      unionOrObject as object,
+      casesOrKeyofUnion as never,
+      cases,
+    );
   }
 
   const union = unionOrObject as string;
-  const unionCases = casesOrKeyofUnion as object;
+  const $cases = casesOrKeyofUnion as object;
 
   const matchesKey: boolean = Object.prototype.hasOwnProperty.call(
-    unionCases,
+    $cases,
     union,
   );
 
   if (!matchesKey) {
-    return hasDefaultCase(unionCases) ?
-        unionCases._()
-      : corrupt(union as never);
+    return hasDefaultCase($cases) ? $cases._() : corrupt(union as never);
   }
 
-  const event = unionCases[union];
+  const event = $cases[union];
 
   return event(union);
 }
@@ -98,9 +91,7 @@ exhaustive.tag = <
   Union extends object,
   Tag extends keyof Union,
   Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = Cases[keyof Cases] extends AnyFunction ?
-    ReturnType<Cases[keyof Cases]>
-  : never,
+  Output = ReturnType<Cases[keyof Cases]>,
 >(
   union: Union,
   tag: Tag,
