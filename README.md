@@ -115,21 +115,21 @@ For every case checked, `exhaustive` will narrow the type of input:
 const getRoleLabel = (r: Role) =>
   exhaustive(r, {
     ADMIN: (role) => capitalize(role), // Admin
-//            ^? role is ADMIN
+    //       ^? role is ADMIN
     DEFAULT: (role) => capitalize(role), // Default
-//              ^? role is DEFAULT
+    //         ^? role is DEFAULT
     VIEWER: (role) => capitalize(role), // Viewer
-//             ^? role is VIEWER
+    //        ^? role is VIEWER
   });
 
 const area = (s: Shape) => {
   return exhaustive.tag(s, 'kind', {
     square: (shape) => shape.size ** 2,
-//             ^? shape is Square
+    //         ^? shape is Square
     rectangle: (shape) => shape.width * shape.height,
-//                ^? shape is Rectangle
+    //            ^? shape is Rectangle
     circle: (shape) => Math.PI * shape.radius ** 2,
-//             ^? shape is Circle
+    //         ^? shape is Circle
   });
 };
 ```
@@ -183,7 +183,7 @@ const getLabelForDayOfWeek = (day: Day) => {
       return 'Weekend';
     default:
       corrupt(day);
-//             ^? Argument of type 'string' is not assignable to parameter of type 'never'
+    //         ^? Argument of type 'string' is not assignable to parameter of type 'never'
   }
 };
 ```
