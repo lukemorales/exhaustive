@@ -1,22 +1,45 @@
 /* eslint-disable prefer-object-has-own */
 import { corrupt } from './corrupt';
 
-type ParseValue<Value> =
-  Value extends 'true' ? true
-  : Value extends 'false' ? false
-  : Value;
+type NoInfer<T> = [T][T extends any ? 0 : never];
 
-export type ExhaustiveUnion<Union extends string | boolean> = {
-  [Key in `${Union}`]: (value: ParseValue<Key>) => any;
-} & ExhaustiveDefaultCase;
+/**
+ * `unknown` extends `any` will be true,
+ * whereas `unknown` extends other types will be false
+ */
+type ValidateOutput<T> = unknown extends T ? unknown : T;
 
-export type ExhaustiveTag<Union extends object, Tag extends keyof Union> = {
-  [Key in `${Union[Tag] & (string | boolean)}`]: (
-    value: Extract<Union, { [K in Tag]: ParseValue<Key> }>,
-  ) => any;
-} & ExhaustiveDefaultCase;
+export type ExhaustiveUnion<Union extends string | boolean, Output = unknown> =
+  [Union] extends [string] ?
+    {
+      [Key in Union]: (value: Key) => Output;
+    } & ExhaustiveDefaultCase<NoInfer<Output>>
+  : Union extends boolean ?
+    {
+      true: (value: true) => Output;
+      false: (value: false) => Output;
+    } & ExhaustiveDefaultCase<NoInfer<Output>>
+  : never;
 
-type ExhaustiveDefaultCase = {
+export type ExhaustiveTag<
+  Union extends object,
+  Tag extends keyof Union,
+  Output = unknown,
+> =
+  [Union[Tag]] extends [string] ?
+    {
+      [Key in `${Union[Tag]}`]: (
+        value: Extract<Union, { [K in Tag]: Key }>,
+      ) => Output;
+    } & ExhaustiveDefaultCase<NoInfer<Output>>
+  : Union[Tag] extends boolean ?
+    {
+      true: (value: Extract<Union, { [K in Tag]: true }>) => Output;
+      false: (value: Extract<Union, { [K in Tag]: false }>) => Output;
+    } & ExhaustiveDefaultCase<NoInfer<Output>>
+  : never;
+
+type ExhaustiveDefaultCase<Output> = {
   /**
    * Default case
    *
@@ -24,7 +47,7 @@ type ExhaustiveDefaultCase = {
    * When declared, "exhaustive" will fallback to this case
    * instead of throwing an unreachable error on unmatched case
    */
-  _?: () => any;
+  _?: (value: never) => Output;
 };
 
 /**
@@ -38,25 +61,46 @@ type ValidateKeys<T, U> =
 
 function hasDefaultCase(
   match: object,
-): match is Required<ExhaustiveDefaultCase> {
+): match is Required<ExhaustiveDefaultCase<any>> {
   return Object.prototype.hasOwnProperty.call(match, '_');
 }
 
+type MatchCases<InferredCases, StrictCases, Output> =
+  unknown extends Output ? InferredCases : StrictCases;
+
+type ExtractOutput<
+  Cases extends Record<string, (...args: any) => unknown>,
+  Output,
+> =
+  unknown extends Output ? ValidateOutput<ReturnType<Cases[keyof Cases]>>
+  : Output;
+
 function exhaustive<
   Union extends string | boolean,
+  Output,
   Cases extends ExhaustiveUnion<Union> = ExhaustiveUnion<Union>,
-  Output = ReturnType<Cases[keyof Cases]>,
->(union: Union, match: ValidateKeys<Cases, ExhaustiveUnion<Union>>): Output;
+>(
+  union: Union,
+  match: MatchCases<
+    ValidateKeys<Cases, ExhaustiveUnion<Union>>,
+    ExhaustiveUnion<Union, Output>,
+    Output
+  >,
+): ExtractOutput<Cases, Output>;
 function exhaustive<
   Union extends object,
   Tag extends keyof Union,
+  Output,
   Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = ReturnType<Cases[keyof Cases]>,
 >(
   union: Union,
   tag: Tag,
-  match: ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
-): Output;
+  match: MatchCases<
+    ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
+    ExhaustiveTag<Union, Tag, Output>,
+    Output
+  >,
+): ExtractOutput<Cases, Output>;
 function exhaustive(
   unionOrObject: string | object,
   casesOrKeyofUnion: string | object,
@@ -79,7 +123,9 @@ function exhaustive(
   );
 
   if (!matchesKey) {
-    return hasDefaultCase($cases) ? $cases._() : corrupt(union as never);
+    const never = union as never;
+
+    return hasDefaultCase($cases) ? $cases._(never) : corrupt(never);
   }
 
   const event = $cases[union];
@@ -90,19 +136,25 @@ function exhaustive(
 exhaustive.tag = <
   Union extends object,
   Tag extends keyof Union,
+  Output,
   Cases extends ExhaustiveTag<Union, Tag> = ExhaustiveTag<Union, Tag>,
-  Output = ReturnType<Cases[keyof Cases]>,
 >(
   union: Union,
   tag: Tag,
-  cases: ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
-): Output => {
+  cases: MatchCases<
+    ValidateKeys<Cases, ExhaustiveTag<Union, Tag>>,
+    ExhaustiveTag<Union, Tag, Output>,
+    Output
+  >,
+): ExtractOutput<Cases, Output> => {
   const key = union[tag];
 
   const matchesKey: boolean = Object.prototype.hasOwnProperty.call(cases, key);
 
   if (!matchesKey) {
-    return hasDefaultCase(cases) ? cases._() : corrupt(union as never);
+    const never = union as never;
+
+    return (hasDefaultCase(cases) ? cases._(never) : corrupt(never)) as never;
   }
 
   const event = cases[key as string];
